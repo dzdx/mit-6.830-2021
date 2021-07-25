@@ -57,11 +57,9 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        int toDeleted = -1;
         tableMap.entrySet().removeIf(e -> e.getValue().name.equals(name));
         int tableId = file.getId();
         tableMap.put(tableId, new Table(tableId, file, name, pkeyField, file.getTupleDesc()));
-        // some code goes here
     }
 
     public void addTable(DbFile file, String name) {

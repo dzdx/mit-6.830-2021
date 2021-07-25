@@ -88,13 +88,9 @@ public class BufferPool {
         // some code goes here
         Page page = pages.get(pid);
         if (page == null) {
-            try {
-                HeapPageId hpid = (HeapPageId) pid;
-                page = new HeapPage(hpid, null);
-                pages.put(hpid, page);
-            } catch (IOException e) {
-                throw new DbException(e.getMessage());
-            }
+            DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+            page = dbFile.readPage(pid);
+            pages.put(pid, page);
         }
         return page;
     }

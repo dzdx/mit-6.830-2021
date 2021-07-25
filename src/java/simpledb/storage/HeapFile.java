@@ -16,21 +16,21 @@ import java.util.*;
  * size, and the file is simply a collection of those pages. HeapFile works
  * closely with HeapPage. The format of HeapPages is described in the HeapPage
  * constructor.
- * 
- * @see HeapPage#HeapPage
+ *
  * @author Sam Madden
+ * @see HeapPage#HeapPage
  */
 public class HeapFile implements DbFile {
 
     /**
      * Constructs a heap file backed by the specified file.
-     * 
+     *
      * @param f
-     *            the file that stores the on-disk backing store for this heap
-     *            file.
+     * the file that stores the on-disk backing store for this heap
+     * file.
      */
 
-    private final File  f;
+    private final File f;
     private final RandomAccessFile rf;
     private final TupleDesc td;
 
@@ -47,7 +47,7 @@ public class HeapFile implements DbFile {
 
     /**
      * Returns the File backing this HeapFile on disk.
-     * 
+     *
      * @return the File backing this HeapFile on disk.
      */
     public File getFile() {
@@ -61,7 +61,7 @@ public class HeapFile implements DbFile {
      * HeapFile has a "unique id," and that you always return the same value for
      * a particular HeapFile. We suggest hashing the absolute file name of the
      * file underlying the heapfile, i.e. f.getAbsoluteFile().hashCode().
-     * 
+     *
      * @return an ID uniquely identifying this HeapFile.
      */
     public int getId() {
@@ -85,9 +85,13 @@ public class HeapFile implements DbFile {
         HeapPageId hpid = (HeapPageId) pid;
         int pgNo = pid.getPageNumber();
         int pageSize = BufferPool.getPageSize();
-        byte[] buffer = new byte[pageSize];
         try {
-            rf.readFully(buffer, pageSize*pgNo, pageSize);
+            int offset = pageSize * pgNo;
+            int fileLength = (int) rf.length();
+            int size = Math.min(fileLength - pageSize * pgNo, pageSize);
+            byte[] buffer = new byte[size];
+            rf.seek(offset);
+            rf.readFully(buffer);
             return new HeapPage(hpid, buffer);
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
@@ -105,7 +109,7 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-        return (int)Math.ceil(f.length()*1.0/BufferPool.getPageSize());
+        return (int) Math.ceil(f.length() * 1.0 / BufferPool.getPageSize());
     }
 
     // see DbFile.java for javadocs
@@ -127,7 +131,7 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
         // some code goes here
-        return new HeapDbFileIterator(this);
+        return new HeapDbFileIterator(this, tid);
     }
 }
 
