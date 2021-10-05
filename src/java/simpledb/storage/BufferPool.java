@@ -7,9 +7,11 @@ import simpledb.common.DeadlockException;
 import simpledb.transaction.TransactionAbortedException;
 import simpledb.transaction.TransactionId;
 
+import java.awt.image.DataBufferShort;
 import java.io.*;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,7 +54,12 @@ public class BufferPool {
     public BufferPool(int numPages) {
         // some code goes here
         this.maxPages = numPages;
-        this.pages = new HashMap<>(numPages);
+        this.pages = new LinkedHashMap<PageId, Page>() {
+            protected boolean removeEldestEntry(Map.Entry<PageId, Page> eldest) {
+                boolean removed = size() > maxPages;
+                return removed;
+            }
+        };
     }
 
     public static int getPageSize() {
@@ -161,9 +168,9 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1
         DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
-        List<Page> pages = dbFile.insertTuple(tid, t);
-        for (Page page : pages) {
-            dbFile.writePage(page);
+        List<Page> pgs = dbFile.insertTuple(tid, t);
+        for (Page page : pgs) {
+            pages.put(page.getId(), page);
             page.markDirty(true, tid);
         }
     }
@@ -205,7 +212,9 @@ public class BufferPool {
     public synchronized void flushAllPages() throws IOException {
         // some code goes here
         // not necessary for lab1
-
+        for (PageId pgId : pages.keySet()) {
+            flushPage(pgId);
+        }
     }
 
     /**
@@ -220,6 +229,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for lab1
+        pages.remove(pid);
     }
 
     /**
@@ -230,6 +240,11 @@ public class BufferPool {
     private synchronized void flushPage(PageId pid) throws IOException {
         // some code goes here
         // not necessary for lab1
+        Page page = pages.get(pid);
+        if (page != null) {
+            DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+            dbFile.writePage(page);
+        }
     }
 
     /**

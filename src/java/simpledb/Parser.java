@@ -539,6 +539,7 @@ public class Parser {
                         System.out.println("Transaction "
                                 + curtrans.getId().getId()
                                 + " aborted because of unhandled error");
+                        System.out.println(Arrays.toString(a.getStackTrace()));
                     }
                     this.inUserTrans = false;
 
