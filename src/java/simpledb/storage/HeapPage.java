@@ -2,13 +2,11 @@ package simpledb.storage;
 
 import simpledb.common.Database;
 import simpledb.common.DbException;
-import simpledb.common.Debug;
 import simpledb.common.Catalog;
 import simpledb.transaction.TransactionId;
 
 import java.util.*;
 import java.io.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and
@@ -255,6 +253,22 @@ public class HeapPage implements Page {
     public void deleteTuple(Tuple t) throws DbException {
         // some code goes here
         // not necessary for lab1
+        if (!td.equals(t.getTupleDesc())) {
+            throw new DbException("tupledesc is mismatch");
+        }
+        RecordId recordId = t.getRecordId();
+        if (recordId == null) {
+            throw new DbException("tuple recordId is null");
+        }
+        if (!recordId.getPageId().equals(getId())) {
+            throw new DbException(String.format("tuple not belongs to %d", getId().getPageNumber()));
+        }
+        int index = recordId.getTupleNumber();
+        if (!isSlotUsed(index)) {
+            throw new DbException(String.format("page slot %d is not existed", index));
+        }
+        markSlotUsed(index, false);
+        tuples[index] = null;
     }
 
     /**
